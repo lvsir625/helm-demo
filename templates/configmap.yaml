@@ -1,0 +1,12 @@
+{{- if .Values.configmap.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configmap.name }}
+  namespace: {{ .Values.nameSpace }}
+data:
+  {{- range .Values.configSet }} 
+  {{ . }}: |
+    {{ $.Files.Get (printf  "%s%s" "files/" .) }}
+  {{- end }}
+{{- end }}
