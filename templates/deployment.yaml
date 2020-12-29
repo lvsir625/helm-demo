@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.nameSpace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "demo.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "demo.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: {{ .Chart.Name }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        {{- if .Values.command.enabled }}
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "{{ .Values.command.value }}"] 
+        {{- end }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        {{- if .Values.volume.enabled }}
+        volumeMounts:
+        {{- if .Values.configmap.enabled }}
+        - subPath: {{ .Values.configSet.settingfile }} 
+          name: {{ .Values.volume.name }}
+          mountPath: {{ .Values.volume.settingPath }}
+        - subPath: {{ .Values.configSet.setfile }}  
+          name: {{ .Values.volume.name }}
+          mountPath: {{ .Values.volume.setPath }}
+        {{- end }}
+        {{- if .Values.crontablog.enabled }}
+        - name: {{ .Values.crontablog.name }}
+          mountPath: {{ .Values.crontablog.mountPath }}
+        {{- end }}
+        {{- if .Values.log.enabled }}
+        - name: {{ .Values.log.name }}
+          mountPath: {{ .Values.log.mountPath }}
+        {{- end }}
+        {{- if .Values.jiacrontabdata.enabled }}
+        - name: {{ .Values.jiacrontabdata.name }}
+          mountPath: {{ .Values.jiacrontabdata.mountPath }}
+        {{- end }}
+        {{- end }}
+      {{- if .Values.volume.enabled }}
+      volumes:
+      {{- if .Values.configmap.enabled }}
+      - name: {{ .Values.volume.name }} 
+        configMap:
+          defaultMode: 420
+          name: {{ .Values.configmap.name }}
+      {{- end }}
+      {{- if .Values.crontablog.enabled }}
+      - name: {{ .Values.crontablog.name }}
+        nfs:
+          server: {{ .Values.volume.nfsip }}
+          path: {{ .Values.crontablog.path }}
+      {{- end }}
+      {{- if .Values.log.enabled }}
+      - name: {{ .Values.log.name }}
+        nfs:
+          server: {{ .Values.volume.nfsip }}
+          path: {{ .Values.log.path }}
+      {{- end }}
+      {{- if .Values.jiacrontabdata.enabled }}
+      - name: {{ .Values.jiacrontabdata.name }}
+        nfs:
+          server: {{ .Values.volume.nfsip }}
+          path: {{ .Values.jiacrontabdata.path }}
+      {{- end }}
+      {{- end }}
