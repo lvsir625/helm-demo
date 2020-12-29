@@ -29,6 +29,7 @@ spec:
         {{- end }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
+        
         {{- if .Values.volume.enabled }}
         volumeMounts:
         {{- if .Values.configmap.enabled }}
@@ -52,6 +53,7 @@ spec:
           mountPath: {{ .Values.jiacrontabdata.mountPath }}
         {{- end }}
         {{- end }}
+      
       {{- if .Values.volume.enabled }}
       volumes:
       {{- if .Values.configmap.enabled }}
